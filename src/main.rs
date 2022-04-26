@@ -17,6 +17,16 @@ impl CodeMatrix {
     pub fn get(&self, row: usize, col: usize) -> Code {
         self.matrix[row][col].to_string()
     }
+
+    pub fn from_json(data: JsonValue) -> Option<CodeMatrix> {
+
+        None
+    }
+
+    pub fn to_json(&self) -> Option<JsonValue> {
+
+        None
+    }
 }
 
 impl Buffer {
@@ -90,19 +100,26 @@ impl Buffer {
 
         None
     }
+
+    pub fn from_json(data: JsonValue) -> Option<Buffer> {
+        match data {
+            JsonValue::Array(buffer) => Some(Buffer {
+                item_indices: buffer.iter().map(JsonValue::as_usize).collect()
+            }),
+            JsonValue::Object(board) => {
+                Buffer::from_json(board["buffer"].clone())
+            },
+            _ => None,
+        }
+    }
+
+    pub fn to_json(&self) -> Option<JsonValue> {
+
+        None
+    }
 }
 
 fn main() {
-    let matrix = CodeMatrix {
-        matrix: vec![
-            ["c9", "b2", "74", "a1", "65"].into_iter().map(String::from).collect(),
-            ["c9", "b2", "74", "a1", "65"].into_iter().map(String::from).collect(),
-            ["c9", "b2", "74", "a1", "65"].into_iter().map(String::from).collect(),
-            ["c9", "b2", "74", "a1", "65"].into_iter().map(String::from).collect(),
-            ["c9", "b2", "74", "a1", "65"].into_iter().map(String::from).collect(),
-        ]
-    };
-
     let mut buffer = Buffer::new(5);
     println!("{:?}", buffer);
     assert_eq!(buffer.coord(0), None);
@@ -113,6 +130,16 @@ fn main() {
     assert_eq!(buffer.coord(0), Some((0, 1)));
     assert!(buffer.contains((0, 1)));
     assert!(!buffer.contains((0, 0)));
+
+    let matrix = CodeMatrix {
+        matrix: vec![
+            ["c9", "b2", "74", "a1", "65"].into_iter().map(String::from).collect(),
+            ["c9", "b2", "74", "a1", "65"].into_iter().map(String::from).collect(),
+            ["c9", "b2", "74", "a1", "65"].into_iter().map(String::from).collect(),
+            ["c9", "b2", "74", "a1", "65"].into_iter().map(String::from).collect(),
+            ["c9", "b2", "74", "a1", "65"].into_iter().map(String::from).collect(),
+        ]
+    };
 
     if let Some(code) = buffer.code(0, matrix) {
         println!("code: {:?}", code);
@@ -148,5 +175,7 @@ fn main() {
     };
 
     println!("{}", matrix_json.dump());
+    println!("buffer from json {:?}", Buffer::from_json(matrix_json));
+
     println!("Success!");
 }
