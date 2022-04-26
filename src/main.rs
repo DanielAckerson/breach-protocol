@@ -1,3 +1,4 @@
+use json::{JsonValue, self};
 
 pub type Code = String;
 pub type Sequence = Vec<Code>;
@@ -10,12 +11,6 @@ pub struct CodeMatrix {
 #[derive(Debug)]
 pub struct Buffer {
     pub item_indices: Vec<Option<usize>>,
-}
-
-struct Board {
-    pub buffer: Buffer,
-    pub sequences: Vec<Sequence>,
-    pub code_matrix: CodeMatrix,
 }
 
 impl CodeMatrix {
