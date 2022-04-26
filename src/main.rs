@@ -130,5 +130,23 @@ fn main() {
 
     assert_eq!(buffer.item_indices.len(), 5);
 
+    let matrix_json = json::object!{
+        buffer: [ null, null, null, null, null, ],
+        sequences: [
+            [ "55", "55", "7a", ],
+            [ "bd", "bd", "bd", ],
+            [ "55", "e9", "55", ],
+        ],
+        code_matrix: [
+            [ "e9", "e9", "7a", "bd", "55", "55", ],
+            [ "1c", "1c", "1c", "7a", "55", "e9", ],
+            [ "1c", "7a", "7a", "1c", "55", "1c", ],
+            [ "bd", "e9", "55", "7a", "55", "7a", ],
+            [ "55", "55", "55", "7a", "55", "1c", ],
+            [ "bd", "bd", "e9", "1c", "55", "e9", ],
+        ],
+    };
+
+    println!("{}", matrix_json.dump());
     println!("Success!");
 }
