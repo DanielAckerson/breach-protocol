@@ -5,7 +5,6 @@ pub type Sequence = Vec<Code>;
 
 pub struct CodeMatrix {
     matrix: Vec<Vec<Code>>,
-    // TODO: impl: fn get(row, col); 
 }
 
 #[derive(Debug)]
@@ -69,6 +68,7 @@ impl Buffer {
         }
     }
 
+    // TODO: return Result on full?
     fn push(&mut self, index: usize) {
         for i in self.item_indices.iter_mut() {
             match i {
@@ -86,11 +86,14 @@ impl Buffer {
 
         loop {
             if let Some(item) = i_iter.next() {
-                if let Some(None) = i_iter.peek() {
-                    let popped = *item;
-                    *item = None;
+                match i_iter.peek() {
+                    Some(None) | None => {
+                        let popped = *item;
+                        *item = None;
 
-                    return popped;
+                        return popped;
+                    },
+                    _ => continue,
                 }
             }
 
@@ -172,5 +175,9 @@ fn main() {
     println!("{}", matrix_json.dump());
     println!("buffer from json {:?}", Buffer::from_json(&matrix_json));
 
+    buffer.pop();
+    buffer.pop();
+
+    println!("buffer {:?}", buffer);
     println!("Success!");
 }
