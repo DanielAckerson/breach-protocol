@@ -112,8 +112,14 @@ impl Buffer {
     }
 
     pub fn to_json(&self) -> Option<JsonValue> {
+        Some(self.item_indices.iter().fold(JsonValue::new_array(), |mut acc, i| {
+            match i {
+                Some(index) => acc.push(*index),
+                None => acc.push(JsonValue::Null),
+            }.unwrap(); // TODO: verify that this won't panic
 
-        None
+            acc
+        }))
     }
 }
 
@@ -179,5 +185,7 @@ fn main() {
     buffer.pop();
 
     println!("buffer {:?}", buffer);
+    println!("buffer to json {:?}", Buffer::to_json(&buffer));
+
     println!("Success!");
 }
