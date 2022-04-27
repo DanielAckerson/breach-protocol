@@ -70,10 +70,10 @@ impl Buffer {
     }
 
     fn push(&mut self, index: usize) {
-        for i in 0..self.item_indices.len() {
-            match self.item_indices[i] {
+        for i in self.item_indices.iter_mut() {
+            match i {
                 None => {
-                    self.item_indices[i] = Some(index);
+                    *i = Some(index);
                     return;
                 },
                 _ => continue,
@@ -82,33 +82,28 @@ impl Buffer {
     }
 
     fn pop(&mut self) -> Option<usize> {
-        for i in 0..self.item_indices.len() {
-            match self.item_indices[i] {
-                // None => self.item_indices[i] = Some(index),
-                None => {
-                    if i == 0 {
-                        return None
-                    }
+        let mut i_iter = self.item_indices.iter_mut().peekable();
 
-                    let index = self.item_indices[i - 1];
-                    self.item_indices[i - 1] = None;
-                    return index;
-                },
-                _ => continue,
+        loop {
+            if let Some(item) = i_iter.next() {
+                if let Some(None) = i_iter.peek() {
+                    let popped = *item;
+                    *item = None;
+
+                    return popped;
+                }
             }
-        }
 
-        None
+            return None;
+        }
     }
 
-    pub fn from_json(data: JsonValue) -> Option<Buffer> {
+    pub fn from_json(data: &JsonValue) -> Option<Buffer> {
         match data {
             JsonValue::Array(buffer) => Some(Buffer {
                 item_indices: buffer.iter().map(JsonValue::as_usize).collect()
             }),
-            JsonValue::Object(board) => {
-                Buffer::from_json(board["buffer"].clone())
-            },
+            JsonValue::Object(board) => Buffer::from_json(&board["buffer"]),
             _ => None,
         }
     }
@@ -175,7 +170,7 @@ fn main() {
     };
 
     println!("{}", matrix_json.dump());
-    println!("buffer from json {:?}", Buffer::from_json(matrix_json));
+    println!("buffer from json {:?}", Buffer::from_json(&matrix_json));
 
     println!("Success!");
 }
