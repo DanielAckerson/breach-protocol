@@ -3,6 +3,7 @@ use json::{JsonValue, self};
 pub type Code = String;
 pub type Sequence = Vec<Code>;
 
+#[derive(Debug)]
 pub struct CodeMatrix {
     matrix: Vec<Vec<Code>>,
 }
@@ -17,9 +18,23 @@ impl CodeMatrix {
         self.matrix[row][col].to_string()
     }
 
-    pub fn from_json(data: JsonValue) -> Option<CodeMatrix> {
+    pub fn from_json(data: &JsonValue) -> Option<CodeMatrix> {
+        let mut rows: Vec<Vec<Code>> = Vec::new();
 
-        None
+        match data {
+            JsonValue::Array(code_matrix) => {
+                for row in code_matrix.iter() {
+                    match row {
+                        JsonValue::Array(row_vec) => rows.push(row_vec.iter().map_while(JsonValue::as_str).map(String::from).collect()),
+                        _ => return None
+                    }
+                }
+                
+                Some(CodeMatrix { matrix: rows })
+            },
+            JsonValue::Object(board) => CodeMatrix::from_json(&board["code_matrix"]),
+            _ => None,
+        }
     }
 
     pub fn to_json(&self) -> Option<JsonValue> {
@@ -68,7 +83,7 @@ impl Buffer {
         }
     }
 
-    // TODO: return Result on full?
+    // TODO: return as Result, e.g. Err when full?
     fn push(&mut self, index: usize) {
         for i in self.item_indices.iter_mut() {
             match i {
@@ -84,21 +99,19 @@ impl Buffer {
     fn pop(&mut self) -> Option<usize> {
         let mut i_iter = self.item_indices.iter_mut().peekable();
 
-        loop {
-            if let Some(item) = i_iter.next() {
-                match i_iter.peek() {
-                    Some(None) | None => {
-                        let popped = *item;
-                        *item = None;
+        while let Some(item) = i_iter.next() {
+            match i_iter.peek() {
+                Some(None) | None => {
+                    let popped = *item;
+                    *item = None;
 
-                        return popped;
-                    },
-                    _ => continue,
-                }
+                    return popped;
+                },
+                _ => continue,
             }
-
-            return None;
         }
+
+        None
     }
 
     pub fn from_json(data: &JsonValue) -> Option<Buffer> {
@@ -113,11 +126,7 @@ impl Buffer {
 
     pub fn to_json(&self) -> Option<JsonValue> {
         Some(self.item_indices.iter().fold(JsonValue::new_array(), |mut acc, i| {
-            match i {
-                Some(index) => acc.push(*index),
-                None => acc.push(JsonValue::Null),
-            }.unwrap(); // TODO: verify that this won't panic
-
+            acc.push(*i).unwrap();
             acc
         }))
     }
@@ -161,31 +170,35 @@ fn main() {
 
     assert_eq!(buffer.item_indices.len(), 5);
 
-    let matrix_json = json::object!{
-        buffer: [ null, null, null, null, null, ],
+    let board_json = json::object!{
+        buffer: [null, null, null, null, null],
         sequences: [
-            [ "55", "55", "7a", ],
-            [ "bd", "bd", "bd", ],
-            [ "55", "e9", "55", ],
+            ["55", "55", "7a"],
+            ["bd", "bd", "bd"],
+            ["55", "e9", "55"],
         ],
         code_matrix: [
-            [ "e9", "e9", "7a", "bd", "55", "55", ],
-            [ "1c", "1c", "1c", "7a", "55", "e9", ],
-            [ "1c", "7a", "7a", "1c", "55", "1c", ],
-            [ "bd", "e9", "55", "7a", "55", "7a", ],
-            [ "55", "55", "55", "7a", "55", "1c", ],
-            [ "bd", "bd", "e9", "1c", "55", "e9", ],
+            ["e9", "e9", "7a", "bd", "55", "55"],
+            ["1c", "1c", "1c", "7a", "55", "e9"],
+            ["1c", "7a", "7a", "1c", "55", "1c"],
+            ["bd", "e9", "55", "7a", "55", "7a"],
+            ["55", "55", "55", "7a", "55", "1c"],
+            ["bd", "bd", "e9", "1c", "55", "e9"],
         ],
     };
 
-    println!("{}", matrix_json.dump());
-    println!("buffer from json {:?}", Buffer::from_json(&matrix_json));
+    println!("{}", board_json.dump());
+    println!("buffer from json {:?}", Buffer::from_json(&board_json));
 
     buffer.pop();
     buffer.pop();
-
     println!("buffer {:?}", buffer);
+    assert_eq!(buffer.item_indices, vec![Some(0), Some(1), Some(2), None, None]);
+
     println!("buffer to json {:?}", Buffer::to_json(&buffer));
+
+    let matrix = CodeMatrix::from_json(&board_json);
+    println!("matrix from json {:?}", matrix);
 
     println!("Success!");
 }
