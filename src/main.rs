@@ -18,6 +18,8 @@ impl CodeMatrix {
         self.matrix[row][col].to_string()
     }
 
+    // TODO: could possibly build from only iterators instead of mut rows
+    // https://www.reddit.com/r/rust/comments/3rz4gu/comment/cwsq4ex/
     pub fn from_json(data: &JsonValue) -> Option<CodeMatrix> {
         let mut rows: Vec<Vec<Code>> = Vec::new();
 
@@ -63,6 +65,10 @@ impl Buffer {
     //    buffer = [col, row, col, row, ...]
     // index % 2 = [  0,   1,   0,   1, ...]
     fn coord(&self, index: usize) -> Option<(usize, usize)> {
+        if index >= self.item_indices.len() {
+            return None
+        }
+
         let prev_index = if index > 0 {
             self.item_indices[index - 1].unwrap()
         } else {
@@ -99,11 +105,11 @@ impl Buffer {
     fn pop(&mut self) -> Option<usize> {
         let mut i_iter = self.item_indices.iter_mut().peekable();
 
-        while let Some(item) = i_iter.next() {
+        while let Some(item_index) = i_iter.next() {
             match i_iter.peek() {
                 Some(None) | None => {
-                    let popped = *item;
-                    *item = None;
+                    let popped = *item_index;
+                    *item_index = None;
 
                     return popped;
                 },
@@ -163,6 +169,8 @@ fn main() {
     println!("{:?}, {:?}", buffer, a);
     assert_eq!(buffer.coord(0), None);
     assert_eq!(buffer.pop(), None);
+
+    assert_eq!(buffer.coord(10), None);
 
     for i in 0..10 {
         buffer.push(i);
