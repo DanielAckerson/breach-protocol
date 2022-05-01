@@ -39,9 +39,20 @@ impl CodeMatrix {
         }
     }
 
+    // TODO: handle Result; None never returned
+    // TODO: make more efficient
     pub fn to_json(&self) -> Option<JsonValue> {
+        Some(self.matrix.iter().fold(JsonValue::new_array(), |mut rows, row| {
+            row.iter().fold(JsonValue::new_array(), |mut cols, col| {
+                cols.push(col.clone()).unwrap(); // TODO: handle Result
+                cols
+            });
 
-        None
+            rows.push(row.clone()).unwrap(); // TODO: handle Result
+            rows
+        }))
+
+        // None
     }
 }
 
@@ -130,6 +141,7 @@ impl Buffer {
         }
     }
 
+    // TODO: handle Result; None never returned
     pub fn to_json(&self) -> Option<JsonValue> {
         Some(self.code_indices.iter().fold(JsonValue::new_array(), |mut acc, i| {
             acc.push(*i).unwrap();
@@ -207,6 +219,7 @@ fn main() {
 
     let matrix = CodeMatrix::from_json(&board_json);
     println!("matrix from json {:?}", matrix);
+    println!("matrix to json {:?}", matrix.unwrap().to_json());
 
     println!("Success!");
 }
