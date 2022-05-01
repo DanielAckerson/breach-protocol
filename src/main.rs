@@ -10,7 +10,7 @@ pub struct CodeMatrix {
 
 #[derive(Debug)]
 pub struct Buffer {
-    pub item_indices: Vec<Option<usize>>,
+    pub code_indices: Vec<Option<usize>>,
 }
 
 impl CodeMatrix {
@@ -47,11 +47,11 @@ impl CodeMatrix {
 
 impl Buffer {
     pub fn new(capacity: usize) -> Buffer {
-        Buffer { item_indices: vec![None; capacity] }
+        Buffer { code_indices: vec![None; capacity] }
     }
 
     pub fn contains(&self, coord: (usize, usize)) -> bool {
-        for i in 0..self.item_indices.len() {
+        for i in 0..self.code_indices.len() {
             match self.coord(i) {
                 Some(my_coord) if my_coord == coord => return true,
                 None => return false,
@@ -65,19 +65,19 @@ impl Buffer {
     //    buffer = [col, row, col, row, ...]
     // index % 2 = [  0,   1,   0,   1, ...]
     fn coord(&self, index: usize) -> Option<(usize, usize)> {
-        if index >= self.item_indices.len() {
+        if index >= self.code_indices.len() {
             return None
         }
 
         let prev_index = if index > 0 {
-            self.item_indices[index - 1].unwrap()
+            self.code_indices[index - 1].unwrap()
         } else {
             0usize // special case; row = 0 implicitly at puzzle start, i.e. i == 0
         };
 
-        return match self.item_indices[index] {
-            Some(item_index) if index % 2 == 0 => Some((prev_index, item_index)),
-            Some(item_index) => Some((item_index, prev_index)),
+        return match self.code_indices[index] {
+            Some(code_index) if index % 2 == 0 => Some((prev_index, code_index)),
+            Some(code_index) => Some((code_index, prev_index)),
             None => None,
         }
     }
@@ -91,7 +91,7 @@ impl Buffer {
 
     // TODO: return as Result, e.g. Err when full?
     fn push(&mut self, index: usize) {
-        for i in self.item_indices.iter_mut() {
+        for i in self.code_indices.iter_mut() {
             match i {
                 None => {
                     *i = Some(index);
@@ -103,13 +103,13 @@ impl Buffer {
     }
 
     fn pop(&mut self) -> Option<usize> {
-        let mut i_iter = self.item_indices.iter_mut().peekable();
+        let mut i_iter = self.code_indices.iter_mut().peekable();
 
-        while let Some(item_index) = i_iter.next() {
+        while let Some(code_index) = i_iter.next() {
             match i_iter.peek() {
                 Some(None) | None => {
-                    let popped = *item_index;
-                    *item_index = None;
+                    let popped = *code_index;
+                    *code_index = None;
 
                     return popped;
                 },
@@ -123,7 +123,7 @@ impl Buffer {
     pub fn from_json(data: &JsonValue) -> Option<Buffer> {
         match data {
             JsonValue::Array(buffer) => Some(Buffer {
-                item_indices: buffer.iter().map(JsonValue::as_usize).collect()
+                code_indices: buffer.iter().map(JsonValue::as_usize).collect()
             }),
             JsonValue::Object(board) => Buffer::from_json(&board["buffer"]),
             _ => None,
@@ -131,7 +131,7 @@ impl Buffer {
     }
 
     pub fn to_json(&self) -> Option<JsonValue> {
-        Some(self.item_indices.iter().fold(JsonValue::new_array(), |mut acc, i| {
+        Some(self.code_indices.iter().fold(JsonValue::new_array(), |mut acc, i| {
             acc.push(*i).unwrap();
             acc
         }))
@@ -176,7 +176,7 @@ fn main() {
         buffer.push(i);
     }
 
-    assert_eq!(buffer.item_indices.len(), 5);
+    assert_eq!(buffer.code_indices.len(), 5);
 
     let board_json = json::object!{
         buffer: [null, null, null, null, null],
@@ -201,7 +201,7 @@ fn main() {
     buffer.pop();
     buffer.pop();
     println!("buffer {:?}", buffer);
-    assert_eq!(buffer.item_indices, vec![Some(0), Some(1), Some(2), None, None]);
+    assert_eq!(buffer.code_indices, vec![Some(0), Some(1), Some(2), None, None]);
 
     println!("buffer to json {:?}", Buffer::to_json(&buffer));
 
