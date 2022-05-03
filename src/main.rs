@@ -151,6 +151,11 @@ impl Buffer {
 }
 
 fn main() {
+    println!("noop");
+}
+
+#[test]
+fn buffer_tests() {
     let mut buffer = Buffer::new(5);
     println!("{:?}", buffer);
     assert_eq!(buffer.coord(0), None);
@@ -172,10 +177,9 @@ fn main() {
         ]
     };
 
-    if let Some(code) = buffer.code(0, matrix) {
-        println!("code: {:?}", code);
-        assert_eq!(code, "b2");
-    }
+    let code = buffer.code(0, matrix).unwrap();
+    println!("code: {:?}", code);
+    assert_eq!(code, "b2");
 
     let a = buffer.pop(); // now it's gone!
     println!("{:?}, {:?}", buffer, a);
@@ -189,6 +193,16 @@ fn main() {
     }
 
     assert_eq!(buffer.code_indices.len(), 5);
+
+    buffer.pop();
+    buffer.pop();
+    println!("buffer {:?}", buffer);
+    assert_eq!(buffer.code_indices, vec![Some(0), Some(1), Some(2), None, None]);
+}
+
+#[test]
+fn json_tests() {
+    //TODO: implement sequences to and from json
 
     let board_json = json::object!{
         buffer: [null, null, null, null, null],
@@ -208,18 +222,12 @@ fn main() {
     };
 
     println!("{}", board_json.dump());
-    println!("buffer from json {:?}", Buffer::from_json(&board_json));
 
-    buffer.pop();
-    buffer.pop();
-    println!("buffer {:?}", buffer);
-    assert_eq!(buffer.code_indices, vec![Some(0), Some(1), Some(2), None, None]);
+    let buffer = Buffer::from_json(&board_json).unwrap();
+    println!("buffer from json {:?}", buffer);
+    println!("buffer to json {:?}", buffer.to_json());
 
-    println!("buffer to json {:?}", Buffer::to_json(&buffer));
-
-    let matrix = CodeMatrix::from_json(&board_json);
+    let matrix = CodeMatrix::from_json(&board_json).unwrap();
     println!("matrix from json {:?}", matrix);
-    println!("matrix to json {:?}", matrix.unwrap().to_json());
-
-    println!("Success!");
+    println!("matrix to json {:?}", matrix.to_json());
 }
