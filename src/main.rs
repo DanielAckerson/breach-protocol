@@ -1,7 +1,10 @@
 use json::{JsonValue, self};
 
 pub type Code = String;
-pub type Sequence = Vec<Code>;
+
+pub struct Sequence {
+    codes: Vec<Code>,
+}
 
 #[derive(Debug)]
 pub struct CodeMatrix {
@@ -10,7 +13,23 @@ pub struct CodeMatrix {
 
 #[derive(Debug)]
 pub struct Buffer {
-    pub code_indices: Vec<Option<usize>>,
+    code_indices: Vec<Option<usize>>,
+}
+
+impl Sequence {
+    pub fn from_json(data: &JsonValue) -> Option<Sequence> {
+        match data {
+            JsonValue::Array(array) => println!("{:?}", array),
+            _ => (),
+        }
+
+        None
+    }
+
+    pub fn to_json() -> Option<JsonValue> {
+
+        None
+    }
 }
 
 impl CodeMatrix {
