@@ -75,7 +75,7 @@ impl Buffer {
 
     //    buffer = [col, row, col, row, ...]
     // index % 2 = [  0,   1,   0,   1, ...]
-    fn coord(&self, index: usize) -> Option<(usize, usize)> {
+    pub fn coord(&self, index: usize) -> Option<(usize, usize)> {
         if index >= self.code_indices.len() {
             return None
         }
@@ -93,7 +93,7 @@ impl Buffer {
         }
     }
 
-    fn code(&self, index: usize, matrix: CodeMatrix) -> Option<Code> {
+    pub fn code(&self, index: usize, matrix: CodeMatrix) -> Option<Code> {
         match self.coord(index) {
             Some((row, col)) => Some(matrix.get(row, col)),
             None => None,
@@ -101,7 +101,7 @@ impl Buffer {
     }
 
     // TODO: return as Result, e.g. Err when full?
-    fn push(&mut self, index: usize) {
+    pub fn push(&mut self, index: usize) {
         for i in self.code_indices.iter_mut() {
             match i {
                 None => {
@@ -113,7 +113,7 @@ impl Buffer {
         }
     }
 
-    fn pop(&mut self) -> Option<usize> {
+    pub fn pop(&mut self) -> Option<usize> {
         let mut i_iter = self.code_indices.iter_mut().peekable();
 
         while let Some(code_index) = i_iter.next() {
