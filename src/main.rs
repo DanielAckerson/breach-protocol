@@ -2,8 +2,15 @@ use json::{JsonValue, self};
 
 pub type Code = String;
 
+#[derive(Debug)]
 pub struct Sequence {
     codes: Vec<Code>,
+}
+
+// TODO: rethink terms
+#[derive(Debug)]
+pub struct Programs {
+    sequences: Vec<Sequence>,
 }
 
 #[derive(Debug)]
@@ -19,11 +26,34 @@ pub struct Buffer {
 impl Sequence {
     pub fn from_json(data: &JsonValue) -> Option<Sequence> {
         match data {
-            JsonValue::Array(array) => println!("{:?}", array),
-            _ => (),
+            JsonValue::Array(sequence_json) => Some(Sequence {
+                codes: sequence_json.iter()
+                                    .map_while(JsonValue::as_str)
+                                    .map(String::from)
+                                    .collect()
+            }),
+            _ => None,
         }
+    }
+}
 
-        None
+impl Programs {
+    pub fn from_json(data: &JsonValue) -> Option<Programs> {
+        match data {
+            JsonValue::Array(sequences_json) => {
+                let mut sequences: Vec<Sequence> = Vec::new();
+
+                for sequence_json in sequences_json.iter() {
+                    if let Some(sequence) = Sequence::from_json(&sequence_json) {
+                        sequences.push(sequence);
+                    }
+                }
+
+                None
+            },
+            JsonValue::Object(board) => Programs::from_json(&board["sequences"]),
+            _ => None,
+        }
     }
 
     pub fn to_json() -> Option<JsonValue> {
@@ -249,4 +279,7 @@ fn json_tests() {
     let matrix = CodeMatrix::from_json(&board_json).unwrap();
     println!("matrix from json {:?}", matrix);
     println!("matrix to json {:?}", matrix.to_json());
+
+    let programs = Programs::from_json(&board_json);
+    println!("programs from json {:?}", programs);
 }
