@@ -199,6 +199,68 @@ impl Buffer {
     }
 }
 
+fn buffer_is_valid(data: &JsonValue) -> bool {
+    match data {
+        JsonValue::Array(buffer) => buffer.iter().all(|item| item.is_number() || item.is_null()),
+        JsonValue::Object(board) => buffer_is_valid(&board["buffer"]),
+        _ => false,
+    }
+}
+
+
+fn sequences_is_valid(data: &JsonValue) -> bool {
+    fn sequence_is_valid(data: &JsonValue) -> bool {
+        match data {
+            JsonValue::Array(sequence) => sequence.iter().all(JsonValue::is_string),
+            _ => false,
+        }
+    }
+
+    match data {
+        JsonValue::Array(sequences) => sequences.iter().all(sequence_is_valid),
+        JsonValue::Object(board) => sequences_is_valid(&board["sequences"]),
+        _ => false,
+    }
+}
+
+fn code_matrix_is_valid(data: &JsonValue) -> bool {
+    fn row_is_valid(row: &JsonValue, prev_len: Option<usize>) -> bool {
+        match row {
+            JsonValue::Array(items) => {
+                let row_type_valid = items.iter().all(JsonValue::is_string);
+
+                match prev_len {
+                    Some(plen) => items.len() == plen && row_type_valid,
+                    None => row_type_valid,
+                }
+            },
+            _ => false,
+        }
+    }
+
+    let mut prev_len = None;
+
+    match data {
+        JsonValue::Array(rows) => rows.iter().all(|row| {
+            let valid = row_is_valid(&row, prev_len);
+            prev_len = Some(row.len());
+
+            valid
+        }),
+        JsonValue::Object(board) => code_matrix_is_valid(&board["code_matrix"]),
+        _ => false,
+    }
+}
+
+fn valid_board(data: &str) -> Option<JsonValue> {
+    let validity_tests = [buffer_is_valid, sequences_is_valid, code_matrix_is_valid];
+
+    match json::parse(data) {
+        Ok(data_json) if validity_tests.iter().all(|f| f(&data_json)) => Some(data_json),
+        _ => None,
+    }
+}
+
 fn main() {
     println!("noop");
 }
@@ -253,7 +315,7 @@ fn buffer_tests() {
 fn json_tests() {
     //TODO: implement sequences to and from json
 
-    let board_json = json::object!{
+    let mut board_json = json::object!{
         buffer: [null, null, null, null, null],
         sequences: [
             ["55", "55", "7a"],
@@ -282,4 +344,13 @@ fn json_tests() {
 
     let programs = Programs::from_json(&board_json);
     println!("programs from json {:?}", programs);
+
+    board_json["buffer"][0] = 1.into();
+    assert!(buffer_is_valid(&board_json));
+    board_json["buffer"][1] = "a7".into();
+    assert!(!buffer_is_valid(&board_json));
+    board_json["buffer"][1] = JsonValue::Null;
+    assert!(buffer_is_valid(&board_json));
+
+    assert!(valid_board(board_json.dump().as_str()).is_some());
 }
