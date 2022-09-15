@@ -29,7 +29,7 @@ impl Sequence {
             JsonValue::Array(sequence_json) => Some(Sequence {
                 codes: sequence_json.iter()
                                     .map_while(JsonValue::as_str)
-                                    .map(String::from)
+                                    .map(Code::from)
                                     .collect()
             }),
             _ => None,
@@ -76,7 +76,7 @@ impl CodeMatrix {
             JsonValue::Array(code_matrix) => {
                 for row in code_matrix.iter() {
                     match row {
-                        JsonValue::Array(row_vec) => rows.push(row_vec.iter().map_while(JsonValue::as_str).map(String::from).collect()),
+                        JsonValue::Array(row_vec) => rows.push(row_vec.iter().map_while(JsonValue::as_str).map(Code::from).collect()),
                         _ => return None
                     }
                 }
@@ -279,14 +279,18 @@ fn buffer_tests() {
     assert!(!buffer.contains((0, 0)));
 
     let matrix = CodeMatrix {
-        matrix: vec![
-            ["c9", "b2", "74", "a1", "65"].into_iter().map(String::from).collect(),
-            ["c9", "b2", "74", "a1", "65"].into_iter().map(String::from).collect(),
-            ["c9", "b2", "74", "a1", "65"].into_iter().map(String::from).collect(),
-            ["c9", "b2", "74", "a1", "65"].into_iter().map(String::from).collect(),
-            ["c9", "b2", "74", "a1", "65"].into_iter().map(String::from).collect(),
-        ]
+        matrix: [
+            ["c9", "b2", "74", "a1", "65"],
+            ["c9", "b2", "74", "a1", "65"],
+            ["c9", "b2", "74", "a1", "65"],
+            ["c9", "b2", "74", "a1", "65"],
+            ["c9", "b2", "74", "a1", "65"],
+        ].into_iter()
+            .map(|row| row.into_iter().map(Code::from).collect())
+            .collect()
     };
+
+    println!("{:?}", matrix);
 
     let code = buffer.code(0, matrix).unwrap();
     println!("code: {:?}", code);
